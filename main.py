@@ -49,15 +49,45 @@ tests.test_load_vgg(load_vgg, tf)
 def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     """
     Create the layers for a fully convolutional network.  Build skip-layers using the vgg layers.
-    :param vgg_layer7_out: TF Tensor for VGG Layer 3 output
-    :param vgg_layer4_out: TF Tensor for VGG Layer 4 output
-    :param vgg_layer3_out: TF Tensor for VGG Layer 7 output
+    :param vgg_layer3_out: TF Tensor for VGG Layer 3 output: shape=(?, ?, ?, 256) = (batch_size, w, h, depth)
+    :param vgg_layer4_out: TF Tensor for VGG Layer 4 output: shape=(?, ?, ?, 512)
+    :param vgg_layer7_out: TF Tensor for VGG Layer 7 output: shape=(?, ?, ?, 4096)
     :param num_classes: Number of classes to classify
     :return: The Tensor for the last layer of output
     """
-    # TODO: Implement function
-    return None
-#tests.test_layers(layers)
+
+    #Apply 1x1 convolution in place of fully connected layer
+    fcn8 = tf.layers.conv2d(vgg_layer7_out, filters=num_classes, kernel_size=1)
+
+    fcn8_up = tf.layers.conv2d_transpose(fcn8, filters=num_classes,
+    kernel_size=4, strides=(7, 7), padding='SAME')
+    #print('fcn8_up shape:', fcn8_up.shape)
+
+    #Upsample fcn8 with size depth=(4096?) to match size of layer 4
+    #so that we can add skip connection with 4th layer
+    fcn9 = tf.layers.conv2d_transpose(fcn8_up, filters=vgg_layer4_out.get_shape().as_list()[-1],
+    kernel_size=4, strides=(4, 4), padding='SAME')
+    #print('fcn9 shape:', fcn9.shape)
+
+    #add a skip connection between current final layer fcn8 and 4th layer
+    fcn9_skip_connected = tf.add(fcn9, vgg_layer4_out)
+
+    #upsample again
+    fcn10 = tf.layers.conv2d_transpose(fcn9_skip_connected, filters=vgg_layer3_out.get_shape().as_list()[-1],
+    kernel_size=4, strides=(2, 2), padding='SAME')
+    #print('fcn10 shape', fcn10.shape)
+
+    #add skip connection
+    fcn10_skipp_connected = tf.add(fcn10, vgg_layer3_out)
+
+    #upsample again
+    fcn11 = tf.layers.conv2d_transpose(fcn10_skipp_connected, filters=num_classes,
+    kernel_size=4, strides=(4, 4), padding='SAME')
+    #print('fcn11 shape', fcn11.shape)
+
+    return fcn11
+
+tests.test_layers(layers)
 
 
 def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
