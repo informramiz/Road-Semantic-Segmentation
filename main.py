@@ -123,7 +123,7 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     pass
 #tests.test_train_nn(train_nn)
 
-
+import numpy as np
 def run():
     num_classes = 2
     image_shape = (160, 576)
@@ -134,15 +134,41 @@ def run():
     # Download pretrained vgg model
     helper.maybe_download_pretrained_vgg(data_dir)
 
+    print("reading data")
+    get_batches_fn = helper.gen_batch_function(os.path.join(data_dir, 'data_road/training'), image_shape)
+    images, gt_images = get_batches_fn(128)
+    image1 = np.expand_dims(images[0], 0)
+    print('data reading complete')
+
     # OPTIONAL: Train and Inference on the cityscapes dataset instead of the Kitti dataset.
     # You'll need a GPU with at least 10 teraFLOPS to train on.
     #  https://www.cityscapes-dataset.com/
 
     with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
         # Path to vgg model
         vgg_path = os.path.join(data_dir, 'vgg')
+
         # Create function to get batches
         #get_batches_fn = helper.gen_batch_function(os.path.join(data_dir, 'data_road/training'), image_shape)
+
+        input_image, keep_prob, vgg_layer3_out, vgg_layer4_out, vgg_layer7_out = load_vgg(sess, vgg_path)
+        fcn = layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes)
+
+        writer = tf.summary.FileWriter('logs', sess.graph)
+
+        #initialize variables of FCN layers we just created
+        sess.run(tf.global_variables_initializer())
+
+        print("Now executing fcn")
+        result = sess.run([vgg_layer7_out], feed_dict={input_image: image1, keep_prob: 0.5})
+        print()
+
+        writer.close()
+
+        # print("layer 3 shape: ", vgg_layer3_out.shape)
+        # print("layer 4 shape: ", vgg_layer4_out.shape)
+        # print("layer 7 shape: ", vgg_layer7_out.shape)
 
         # OPTIONAL: Augment Images for better results
         #  https://datascience.stackexchange.com/questions/5224/how-to-prepare-augment-images-for-neural-network
