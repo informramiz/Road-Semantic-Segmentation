@@ -120,12 +120,12 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
 
     #optimizer to reduce loss
     train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss_op)
-    return logits, train_op, loss_op, correct_label_reshaped
+    return logits, train_op, loss_op
 
-# tests.test_optimize(optimize)
+tests.test_optimize(optimize)
 
 def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_loss, input_image,
-             correct_label, keep_prob, learning_rate, logits, correct_label_reshaped):
+             correct_label, keep_prob, learning_rate):
     """
     Train neural network and print out the loss during training.
     :param sess: TF Session
@@ -149,11 +149,9 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
         total_loss = 0
         for X_batch, gt_batch in get_batches_fn(batch_size):
 
-            correct_label_reshaped_result, logits_result, loss, _ = sess.run([correct_label_reshaped, logits, cross_entropy_loss, train_op], feed_dict={input_image: X_batch, correct_label: gt_batch,
+            loss, _ = sess.run([cross_entropy_loss, train_op],
+            feed_dict={input_image: X_batch, correct_label: gt_batch,
             keep_prob: keep_prob_value, learning_rate:learning_rate_value})
-
-            print("logits_result shape: ", np.array(logits_result).shape)
-            print("correct_label_reshaped_result shape: ", np.array(correct_label_reshaped_result).shape)
 
             total_loss += loss;
 
@@ -162,9 +160,7 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
         print()
 
 #test case for method train_nn()
-# tests.test_train_nn(train_nn)
-
-import numpy as np
+tests.test_train_nn(train_nn)
 
 def run():
     EPOCHS = 5
@@ -201,14 +197,14 @@ def run():
         fcn = layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes)
 
         #build an optimizer
-        logits, train_op, cross_entropy_loss_op, correct_label_reshaped = optimize(fcn, correct_label, learning_rate, num_classes)
+        logits, train_op, cross_entropy_loss_op = optimize(fcn, correct_label, learning_rate, num_classes)
 
         #initialize variables of FCN layers we just created
         sess.run(tf.global_variables_initializer())
 
         # Train NN using the train_nn function
         train_nn(sess, EPOCHS, BATCH_SIZE, get_batches_fn, train_op, cross_entropy_loss_op,
-        input_image, correct_label, keep_prob, learning_rate, logits, correct_label_reshaped)
+        input_image, correct_label, keep_prob, learning_rate)
 
         # Save inference data using helper.save_inference_samples
         helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
@@ -216,6 +212,7 @@ def run():
         # OPTIONAL: Apply the trained model to a video
 
 
+import numpy as np
 def my_run():
     num_classes = 2
     image_shape = (160, 576)
