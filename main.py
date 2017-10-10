@@ -139,9 +139,23 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     :param keep_prob: TF Placeholder for dropout keep probability
     :param learning_rate: TF Placeholder for learning rate
     """
-    # TODO: Implement function
-    pass
-#tests.test_train_nn(train_nn)
+    
+    for epoch in range(epochs):
+        batches, gt_batches = get_batches_fn(batch_size)
+
+        for offset in range(0, len(batches), batch_size):
+            end = offset + batch_size
+            X_batch = batches[offset:end]
+            gt_batch = gt_batches[offset:end]
+
+            loss, _ = sess.run([cross_entropy_loss, train_op], feed_dict={input_image: X_batch, correct_label: gt_batch,
+            keep_prob: 0.5, learning_rate:0.08})
+
+            print("EPOCH {} ...".format(epoch + 1))
+            print("Validation Accuracy = {:.3f}".format(loss))
+            print()
+
+tests.test_train_nn(train_nn)
 
 import numpy as np
 def run():
