@@ -1,4 +1,5 @@
 import os.path
+import shutil
 import tensorflow as tf
 import helper
 import warnings
@@ -162,6 +163,19 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
 #test case for method train_nn()
 tests.test_train_nn(train_nn)
 
+
+def save_model(sess):
+    save_file_path = 'saved_model/model.ckpt'
+    # Clean saved_model dir
+    if os.path.exists(save_file_path):
+        shutil.rmtree(save_file_path)
+    os.makedirs(save_file_path)
+
+    #saver to save the trained model
+    saver = tf.train.Saver()
+    #save model
+    saver.save(sess, save_file_path)
+
 def run():
     EPOCHS = 5
     BATCH_SIZE = 10
@@ -206,8 +220,13 @@ def run():
         train_nn(sess, EPOCHS, BATCH_SIZE, get_batches_fn, train_op, cross_entropy_loss_op,
         input_image, correct_label, keep_prob, learning_rate)
 
+        #let's save model
+        print('saving model...')
+        save_model(sess)
+
         # Save inference data using helper.save_inference_samples
         helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
+
 
         # OPTIONAL: Apply the trained model to a video
 
