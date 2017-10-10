@@ -167,8 +167,8 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
 import numpy as np
 
 def run():
-    EPOCHS = 3
-    BATCH_SIZE = 5
+    EPOCHS = 5
+    BATCH_SIZE = 10
     num_classes = 2
     image_shape = (160, 576)
     data_dir = './data'
