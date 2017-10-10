@@ -107,9 +107,21 @@ def optimize(nn_last_layer, correct_label, learning_rate, num_classes):
     :param num_classes: Number of classes to classify
     :return: Tuple of (logits, train_op, cross_entropy_loss)
     """
-    # TODO: Implement function
-    return None, None, None
-#tests.test_optimize(optimize)
+    
+    #Find logits --> reshape last layer so that rows represents all pixels and
+    #columns represents classes
+    logits = tf.reshape(nn_last_layer, [-1, num_classes])
+
+    #calculate distance from actual labels using cross entropy
+    cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=correct_label)
+    #take mean for total loss
+    loss_op = tf.reduce_mean(cross_entropy)
+
+    #optimizer to reduce loss
+    train_op = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(loss_op)
+    return logits, train_op, loss_op
+
+tests.test_optimize(optimize)
 
 
 def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_loss, input_image,
