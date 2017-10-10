@@ -62,17 +62,12 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     #out=[5, 18, 2]
     fcn8 = tf.layers.conv2d(vgg_layer7_out, filters=num_classes, kernel_size=1, name="fcn8")
 
-    # fcn8_up = tf.layers.conv2d_transpose(fcn8, filters=num_classes,
-    # kernel_size=5, strides=(1, 1), name="fcn8_upsample")
-    # # print('fcn8_up shape:', tf.shape(fcn8_up))
-
     #Upsample fcn8 with size depth=(4096?) to match size of layer 4
     #so that we can add skip connection with 4th layer
     #input=[5, 18, 2]
     #out=[10, 36, 512]
     fcn9 = tf.layers.conv2d_transpose(fcn8, filters=vgg_layer4_out.get_shape().as_list()[-1],
     kernel_size=4, strides=(2, 2), padding='SAME', name="fcn9")
-    #print('fcn9 shape:', fcn9.shape)
 
     #add a skip connection between current final layer fcn8 and 4th layer
     fcn9_skip_connected = tf.add(fcn9, vgg_layer4_out, name="fcn9_plus_vgg_layer4")
@@ -82,7 +77,6 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     #out=[20, 72, 256]
     fcn10 = tf.layers.conv2d_transpose(fcn9_skip_connected, filters=vgg_layer3_out.get_shape().as_list()[-1],
     kernel_size=4, strides=(2, 2), padding='SAME', name="fcn10_conv2d")
-    print('fcn10 shape', fcn10.shape)
 
     #add skip connection
     fcn10_skipp_connected = tf.add(fcn10, vgg_layer3_out, name="fcn10_plus_vgg_layer3")
@@ -92,7 +86,6 @@ def layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes):
     #out=[160, 576, 2]
     fcn11 = tf.layers.conv2d_transpose(fcn10_skipp_connected, filters=num_classes,
     kernel_size=16, strides=(8, 8), padding='SAME', name="fcn11")
-    print('fcn11 shape', fcn11.shape)
 
     return fcn11
 
