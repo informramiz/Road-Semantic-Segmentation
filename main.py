@@ -17,6 +17,9 @@ if not tf.test.gpu_device_name():
 else:
     print('Default GPU Device: {}'.format(tf.test.gpu_device_name()))
 
+print()
+print("Running test cases: 4 -->")
+
 def load_vgg(sess, vgg_path):
     """
     Load Pretrained VGG Model into TensorFlow.
