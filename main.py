@@ -179,10 +179,15 @@ def run():
     image_shape = (160, 576)
     data_dir = './data'
     runs_dir = './runs'
+
     tests.test_for_kitti_dataset(data_dir)
+
+    print("All test cases passed. Starting building FCN")
+    print()
 
     # Download pretrained vgg model
     helper.maybe_download_pretrained_vgg(data_dir)
+
 
     # OPTIONAL: Train and Inference on the cityscapes dataset instead of the Kitti dataset.
     # You'll need a GPU with at least 10 teraFLOPS to train on.
@@ -212,17 +217,19 @@ def run():
         #initialize variables of FCN layers we just created
         sess.run(tf.global_variables_initializer())
 
+        print("Model build successful, starting training")
         # Train NN using the train_nn function
         train_nn(sess, EPOCHS, BATCH_SIZE, get_batches_fn, train_op, cross_entropy_loss_op,
         input_image, correct_label, keep_prob, learning_rate)
 
         #let's save model
-        print('saving model...')
+        print('Training successfull, saving model...')
         save_model(sess)
+        print("Model saved.")
 
         # Save inference data using helper.save_inference_samples
         helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
-
+        print("All done!")
 
         # OPTIONAL: Apply the trained model to a video
 
