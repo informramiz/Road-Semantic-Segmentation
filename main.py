@@ -139,26 +139,27 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
     :param keep_prob: TF Placeholder for dropout keep probability
     :param learning_rate: TF Placeholder for learning rate
     """
-    
+
+    keep_prob_value = 0.5
+    learning_rate_value = 0.08
     for epoch in range(epochs):
-        batches, gt_batches = get_batches_fn(batch_size)
+        #batches, gt_batches = get_batches_fn(batch_size)
 
-        for offset in range(0, len(batches), batch_size):
-            end = offset + batch_size
-            X_batch = batches[offset:end]
-            gt_batch = gt_batches[offset:end]
-
+        for X_batch, gt_batch in get_batches_fn(batch_size):
             loss, _ = sess.run([cross_entropy_loss, train_op], feed_dict={input_image: X_batch, correct_label: gt_batch,
-            keep_prob: 0.5, learning_rate:0.08})
+            keep_prob: keep_prob_value, learning_rate:learning_rate_value})
 
             print("EPOCH {} ...".format(epoch + 1))
             print("Validation Accuracy = {:.3f}".format(loss))
             print()
 
+#test case for method train_nn()
 tests.test_train_nn(train_nn)
 
 import numpy as np
 def run():
+    EPOCHS = 1
+    BATCH_SIZE = 10
     num_classes = 2
     image_shape = (160, 576)
     data_dir = './data'
@@ -168,15 +169,18 @@ def run():
     # Download pretrained vgg model
     helper.maybe_download_pretrained_vgg(data_dir)
 
-    print("reading data")
-    get_batches_fn = helper.gen_batch_function(os.path.join(data_dir, 'data_road/training'), image_shape)
-    images, gt_images = get_batches_fn(128)
-    image1 = np.expand_dims(images[0], 0)
-    print('data reading complete')
+    # print("reading data")
+    # get_batches_fn = helper.gen_batch_function(os.path.join(data_dir, 'data_road/training'), image_shape)
+    # images, gt_images = get_batches_fn(128)
+    # image1 = np.expand_dims(images[0], 0)
+    # print('data reading complete')
 
     # OPTIONAL: Train and Inference on the cityscapes dataset instead of the Kitti dataset.
     # You'll need a GPU with at least 10 teraFLOPS to train on.
     #  https://www.cityscapes-dataset.com/
+
+    learning_rate = tf.placeholder(tf.float32, name="learning_rate")
+    correct_label = tf.placeholder(tf.float32, name="correct_label")
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
@@ -184,19 +188,30 @@ def run():
         vgg_path = os.path.join(data_dir, 'vgg')
 
         # Create function to get batches
-        #get_batches_fn = helper.gen_batch_function(os.path.join(data_dir, 'data_road/training'), image_shape)
+        get_batches_fn = helper.gen_batch_function(os.path.join(data_dir, 'data_road/training'), image_shape)
 
+        # OPTIONAL: Augment Images for better results
+        #  https://datascience.stackexchange.com/questions/5224/how-to-prepare-augment-images-for-neural-network
+
+        # Build NN using load_vgg, layers, and optimize function
         input_image, keep_prob, vgg_layer3_out, vgg_layer4_out, vgg_layer7_out = load_vgg(sess, vgg_path)
         fcn = layers(vgg_layer3_out, vgg_layer4_out, vgg_layer7_out, num_classes)
 
-        writer = tf.summary.FileWriter('logs', sess.graph)
+        #build an optimizer
+        logits, train_op, cross_entropy_loss_op = optimize(fcn, correct_label, learning_rate, num_classes)
 
         #initialize variables of FCN layers we just created
         sess.run(tf.global_variables_initializer())
 
-        print("Now executing fcn")
-        result = sess.run([vgg_layer7_out], feed_dict={input_image: image1, keep_prob: 0.5})
-        print()
+        # Train NN using the train_nn function
+        train_nn(sess, EPOCHS, BATCH_SIZE, get_batches_fn, train_op, cross_entropy_loss_op,
+        input_image, correct_label, keep_prob, learning_rate)
+
+        # Save inference data using helper.save_inference_samples
+        helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
+
+        # OPTIONAL: Apply the trained model to a video
+
 
         writer.close()
 
