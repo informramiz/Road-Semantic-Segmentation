@@ -111,7 +111,7 @@ def gen_test_output(sess, logits, keep_prob, image_pl, data_folder, image_shape)
     :return: Output for for each test image
     """
     image_paths = glob(os.path.join(data_folder, 'image_2', '*.png'))
-    for i in range(0, 50):
+    for i in range(0, 100):
         image_file = image_paths[i]
         image = scipy.misc.imresize(scipy.misc.imread(image_file), image_shape)
 
