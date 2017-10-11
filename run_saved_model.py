@@ -5,6 +5,7 @@ import helper
 import warnings
 from distutils.version import LooseVersion
 import project_tests as tests
+import sys
 
 
 # Check TensorFlow Version
@@ -160,14 +161,15 @@ def train_nn(sess, epochs, batch_size, get_batches_fn, train_op, cross_entropy_l
 tests.test_train_nn(train_nn)
 
 
-def run():
+def run(command):
     EPOCHS = 3
     BATCH_SIZE = 5
     num_classes = 2
     image_shape = (160, 576)
     data_dir = './data'
     runs_dir = './runs'
-    save_file_path = 'saved_model/model.ckpt'
+    video_path = './data/driving.mp4'
+    save_file_path = './saved_model/model.ckpt'
 
     tests.test_for_kitti_dataset(data_dir)
 
@@ -197,11 +199,20 @@ def run():
         saver = tf.train.Saver()
         saver.restore(sess, save_file_path)
 
-        # Save inference data using helper.save_inference_samples
-        helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
+        if command == 'video':
+            # Apply the trained model to a video
+            helper.run_inference_on_video(video_path, sess, image_shape, logits, keep_prob, input_image)
+        elif command == 'both':
+            # Save inference data using helper.save_inference_samples
+            helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
 
+            # Apply the trained model to a video
+            helper.run_inference_on_video(video_path, sess, image_shape, logits, keep_prob, input_image)
+        else:
+            # Save inference data using helper.save_inference_samples
+            helper.save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_prob, input_image)
 
-        # OPTIONAL: Apply the trained model to a video
 
 if __name__ == '__main__':
-    run()
+    command = sys.argv[1] if len(sys.argv) > 1 else None
+    run(command)
