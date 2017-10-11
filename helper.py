@@ -164,5 +164,5 @@ def run_inference_on_video(video_path, sess, image_shape, logits, keep_prob, inp
     print('Inference complete.')
 
     # write to file
-    new_clip.write_videofile('result.mp4')
+    new_clip.write_videofile('output_video.mp4')
     print('Video saved!')
