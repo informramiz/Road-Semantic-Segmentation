@@ -79,7 +79,7 @@ def gen_batch_function(data_folder, image_shape):
         background_color = np.array([255, 0, 0])
 
         random.shuffle(image_paths)
-        for batch_i in range(0, 50, batch_size):
+        for batch_i in range(0, len(image_paths), batch_size):
             images = []
             gt_images = []
             for image_file in image_paths[batch_i:batch_i+batch_size]:
