@@ -110,7 +110,9 @@ def gen_test_output(sess, logits, keep_prob, image_pl, data_folder, image_shape)
     :param image_shape: Tuple - Shape of image
     :return: Output for for each test image
     """
-    for image_file in glob(os.path.join(data_folder, 'image_2', '*.png')):
+    image_paths = glob(os.path.join(data_folder, 'image_2', '*.png'))
+    for i in range(0, len(image_paths)):
+        image_file = image_paths[i]
         image = scipy.misc.imresize(scipy.misc.imread(image_file), image_shape)
 
         im_softmax = sess.run(
