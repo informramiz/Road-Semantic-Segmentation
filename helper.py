@@ -10,6 +10,7 @@ import tensorflow as tf
 from glob import glob
 from urllib.request import urlretrieve
 from tqdm import tqdm
+from moviepy.editor import VideoFileClip
 
 
 class DLProgress(tqdm):
@@ -138,3 +139,30 @@ def save_inference_samples(runs_dir, data_dir, sess, image_shape, logits, keep_p
         sess, logits, keep_prob, input_image, os.path.join(data_dir, 'data_road/testing'), image_shape)
     for name, image in image_outputs:
         scipy.misc.imsave(os.path.join(output_dir, name), image)
+
+
+def run_inference_on_video(video_path, sess, image_shape, logits, keep_prob, input_image):
+    def run_inference_on_image(image):
+        image = scipy.misc.imresize(image, image_shape)
+
+        im_softmax = sess.run(
+            [tf.nn.softmax(logits)],
+            {keep_prob: 1.0, input_image: [image]})
+        im_softmax = im_softmax[0][:, 1].reshape(image_shape[0], image_shape[1])
+        #(im_softmax >= 0)
+        segmentation = (im_softmax >= 0.5).reshape(image_shape[0], image_shape[1], 1)
+        mask = np.dot(segmentation, np.array([[0, 255, 0, 127]]))
+        mask = scipy.misc.toimage(mask, mode="RGBA")
+        street_im = scipy.misc.toimage(image)
+        street_im.paste(mask, box=None, mask=mask)
+
+        return np.array(street_im)
+
+    print('Running inference on video...')
+    clip = VideoFileClip(video_path)
+    new_clip = clip.fl_image(run_inference_on_image)
+    print('Inference complete.')
+
+    # write to file
+    new_clip.write_videofile('result.mp4')
+    print('Video saved!')
