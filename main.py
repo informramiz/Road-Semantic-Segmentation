@@ -174,7 +174,7 @@ def save_model(sess):
 
 def run():
     EPOCHS = 10
-    BATCH_SIZE = 128
+    BATCH_SIZE = 16
     num_classes = 2
     image_shape = (160, 576)
     data_dir = './data'
